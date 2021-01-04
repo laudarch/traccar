@@ -28,7 +28,8 @@ public class Jt701Protocol extends BaseProtocol {
                 Command.TYPE_ENGINE_RESUME,
                 Command.TYPE_ENGINE_STOP,
                 Command.TYPE_SET_TIMEZONE,
-                Command.TYPE_REBOOT_DEVICE);
+                Command.TYPE_REBOOT_DEVICE,
+                Command.TYPE_CUSTOM);
         addServer(new TrackerServer(false, getName()) {
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline) {

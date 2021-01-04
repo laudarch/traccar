@@ -17,9 +17,12 @@ package org.traccar.protocol;
 
 import java.util.TimeZone;
 
+import io.netty.buffer.Unpooled;
 import org.traccar.StringProtocolEncoder;
 import org.traccar.model.Command;
 import org.traccar.Protocol;
+
+import java.nio.charset.StandardCharsets;
 
 public class Jt701ProtocolEncoder extends StringProtocolEncoder {
 
@@ -31,6 +34,9 @@ public class Jt701ProtocolEncoder extends StringProtocolEncoder {
     protected Object encodeCommand(Command command) {
 
         switch (command.getType()) {
+	    case Command.TYPE_CUSTOM:
+		return Unpooled.copiedBuffer(
+		                        command.getString(Command.KEY_DATA) + "\r\n", StandardCharsets.US_ASCII);
             case Command.TYPE_ENGINE_STOP:
                 return "(S07,0)";
             case Command.TYPE_ENGINE_RESUME:
