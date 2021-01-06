@@ -40,9 +40,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
     }
 
     private static double convertCoordinate(int raw) {
-        int degrees = raw / 1000000;
-        double minutes = (raw % 1000000) / 10000.0;
-        return degrees + minutes / 60;
+	    return raw / 1000000.0;
     }
 
     private void decodeStatus(Position position, ByteBuf buf) {
@@ -106,12 +104,12 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         int lon = buf.readInt(); 
         int alt = buf.readShort();
 
-	LOGGER.info("Lat: " + lat + " x " + (lat / 1000000) + " Lon: " + lon + " Alt: " + alt);
+	//LOGGER.info("Lat: " + lat + " Lon: " + lon + " Alt: " + alt);
 
 	double latitude = convertCoordinate(lat);
         double longitude = convertCoordinate(lon);
         double altitude = convertCoordinate(alt);
-	LOGGER.info("Lat: " + latitude + " Lon: " + longitude + " Alt: " + altitude);
+	//LOGGER.info("Lat: " + latitude + " Lon: " + longitude + " Alt: " + altitude);
 
 	position.setLatitude(latitude);
         if ((statusFlag & 0x4) == 0) {
