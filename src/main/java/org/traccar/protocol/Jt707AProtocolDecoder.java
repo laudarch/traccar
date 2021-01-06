@@ -18,28 +18,22 @@ package org.traccar.protocol;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.Channel;
-import org.traccar.BaseProtocolDecoder;
-import org.traccar.DeviceSession;
-import org.traccar.NetworkMessage;
-import org.traccar.Protocol;
-import org.traccar.helper.BcdUtil;
-import org.traccar.helper.BitBuffer;
-import org.traccar.helper.BitUtil;
-import org.traccar.helper.DateBuilder;
-import org.traccar.helper.Parser;
-import org.traccar.helper.PatternBuilder;
-import org.traccar.helper.UnitsConverter;
-import org.traccar.model.CellTower;
-import org.traccar.model.Network;
-import org.traccar.model.Position;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.net.SocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Pattern;
+import org.traccar.BaseProtocolDecoder;
+import org.traccar.DeviceSession;
+import org.traccar.Protocol;
+import org.traccar.helper.BcdUtil;
+import org.traccar.helper.BitUtil;
+import org.traccar.helper.DateBuilder;
+import org.traccar.model.Position;
 
 public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Jt707AProtocolDecoder.class);
 
     public Jt707AProtocolDecoder(Protocol protocol) {
         super(protocol);
@@ -86,17 +80,47 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
     }
 
-    static boolean isLongFormat(ByteBuf buf, int flagIndex) {
-        return buf.getUnsignedByte(flagIndex) >> 4 == 0x7;
-    }
+    private List<Position> decodeBinary(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
 
-    static void decodeBinaryLocation(ByteBuf buf, Position position) {
+        List<Position> positions = new LinkedList<>();
 
-        double latitude = BcdUtil.readCoordinate(buf);
-        double longitude = BcdUtil.readCoordinate(buf);
-        double altitude = convertCoordinate(BcdUtil.readInteger(buf, 2));
+        byte header = buf.readByte(); // header
+	ByteBuf messageID = buf.readBytes(2);
+	ByteBuf messageLength = buf.readBytes(2);
 
-        position.setSpeed(buf.readUnsignedShort());
+        String id = String.valueOf(Long.parseLong(ByteBufUtil.hexDump(buf.readSlice(6))));
+        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, id);
+        if (deviceSession == null) {
+            return null;
+        }
+
+	ByteBuf series = buf.readBytes(2);
+
+        ByteBuf alarmFlag = buf.readBytes(4); // alarm flags
+        int statusFlag = buf.readInt(); // statusflags
+
+        Position position = new Position(getProtocolName());
+        position.setDeviceId(deviceSession.getDeviceId());
+
+        int lat = buf.readInt();
+        int lon = buf.readInt(); 
+        int alt = buf.readShort();
+
+	LOGGER.info("Lat: " + lat + " x " + (lat / 1000000) + " Lon: " + lon + " Alt: " + alt);
+
+	double latitude = convertCoordinate(lat);
+        double longitude = convertCoordinate(lon);
+        double altitude = convertCoordinate(alt);
+	LOGGER.info("Lat: " + latitude + " Lon: " + longitude + " Alt: " + altitude);
+
+	position.setLatitude(latitude);
+        if ((statusFlag & 0x4) == 0) {
+            longitude = -longitude;
+        }
+        position.setLongitude(longitude);
+        position.setAltitude(altitude);
+
+        position.setSpeed(buf.readUnsignedShort() * 0.1);
         position.setCourse(buf.readUnsignedShort());
 	
         DateBuilder dateBuilder = new DateBuilder()
@@ -109,58 +133,6 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
         position.setTime(dateBuilder.getDate());
 
-	/*DateBuilder dateBuilder = new DateBuilder()
-                .setDay(BcdUtil.readInteger(buf, 39))
-                .setMonth(BcdUtil.readInteger(buf, 38))
-                .setYear(BcdUtil.readInteger(buf, 37))
-                .setHour(BcdUtil.readInteger(buf, 40))
-                .setMinute(BcdUtil.readInteger(buf, 41))
-                .setSecond(BcdUtil.readInteger(buf, 42));
-        position.setTime(dateBuilder.getDate());*/
-
-
-        /*byte flags = buf.readByte();
-        position.setValid((flags & 0x1) == 0x1);
-        if ((flags & 0x2) == 0) {
-            latitude = -latitude;
-        }*/
-        position.setLatitude(latitude);
-        /*if ((flags & 0x4) == 0) {
-            longitude = -longitude;
-        }*/
-        position.setLongitude(longitude);
-        position.setAltitude(altitude);
-
-    }
-
-    private List<Position> decodeBinary(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
-
-        List<Position> positions = new LinkedList<>();
-
-        //buf.readByte(); // header
-        buf.readBytes(5); // Skip to ID
-
-        String id = String.valueOf(Long.parseLong(ByteBufUtil.hexDump(buf.readSlice(6))));
-	//System.out.println("id is " + id);
-        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, id);
-        if (deviceSession == null) {
-            return null;
-        }
-
-        int series = BitUtil.from(buf.readUnsignedShort(), 2);
-
-	//System.out.println("series is " + series);
-	//System.out.println("readableBytes is " + buf.readableBytes());
-
-        buf.readBytes(4); // Skip alarm flags
-        long status = buf.readUnsignedInt();
-
-	//System.out.println("readerIndex is " + buf.readerIndex());
-        //while (buf.readableBytes() > 1) {
-            Position position = new Position(getProtocolName());
-            position.setDeviceId(deviceSession.getDeviceId());
-
-            decodeBinaryLocation(buf, position);
 
             /*position.set(Position.KEY_ODOMETER, buf.readUnsignedInt() * 1000);
             position.set(Position.KEY_SATELLITES, buf.readUnsignedByte());
@@ -198,7 +170,6 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
 	    position.setProtocol("jt707a");
             positions.add(position);
-        //}
 
         //buf.readUnsignedByte(); // index
 
