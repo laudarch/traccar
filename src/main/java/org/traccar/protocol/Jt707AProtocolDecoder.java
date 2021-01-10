@@ -29,6 +29,9 @@ import org.traccar.Protocol;
 import org.traccar.helper.BcdUtil;
 import org.traccar.helper.BitUtil;
 import org.traccar.helper.DateBuilder;
+import org.traccar.helper.DataConverter;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
@@ -41,41 +44,6 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
     private static double convertCoordinate(int raw) {
 	    return raw / 1000000.0;
-    }
-
-    private void decodeStatus(Position position, ByteBuf buf) {
-
-        int value = buf.readUnsignedByte();
-
-        position.set(Position.KEY_IGNITION, BitUtil.check(value, 0));
-        position.set(Position.KEY_DOOR, BitUtil.check(value, 6));
-
-        value = buf.readUnsignedByte();
-
-        position.set(Position.KEY_CHARGE, BitUtil.check(value, 0));
-        position.set(Position.KEY_BLOCKED, BitUtil.check(value, 1));
-
-        if (BitUtil.check(value, 2)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_SOS);
-        }
-        if (BitUtil.check(value, 3) || BitUtil.check(value, 4)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_GPS_ANTENNA_CUT);
-        }
-        if (BitUtil.check(value, 4)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_OVERSPEED);
-        }
-
-        value = buf.readUnsignedByte();
-
-        if (BitUtil.check(value, 2)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_FATIGUE_DRIVING);
-        }
-        if (BitUtil.check(value, 3)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_TOW);
-        }
-
-        buf.readUnsignedByte(); // reserved
-
     }
 
     private List<Position> decodeBinary(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
@@ -109,7 +77,6 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 	double latitude = convertCoordinate(lat);
         double longitude = convertCoordinate(lon);
         double altitude = convertCoordinate(alt);
-	//LOGGER.info("Lat: " + latitude + " Lon: " + longitude + " Alt: " + altitude);
 
 	position.setLatitude(latitude);
         if ((statusFlag & 0x4) == 0) {
@@ -128,48 +95,135 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         	.setHour(BcdUtil.readInteger(buf, 2))
         	.setMinute(BcdUtil.readInteger(buf, 2))
         	.setSecond(BcdUtil.readInteger(buf, 2));
-
         position.setTime(dateBuilder.getDate());
 
+	LOGGER.info("Remaining bytes: " + buf.readableBytes());
+	while (buf.readableBytes() >= 1) {
+        	int xid = (int) buf.readByte(); 
 
-            /*position.set(Position.KEY_ODOMETER, buf.readUnsignedInt() * 1000);
-            position.set(Position.KEY_SATELLITES, buf.readUnsignedByte());
+		switch (xid) {
+			case 0x7e :
+				LOGGER.info("0x7e");
+				break; // we are done :)
 
-            buf.readUnsignedInt(); // vehicle id combined
+			case 0x01 :
+				LOGGER.info("0x01");
+				buf.readByte(); // Length
+				int mileage = buf.readInt();
+				LOGGER.info("mileage: " + mileage);
+				LOGGER.info("0x01 Remaining bytes: " + buf.readableBytes());
+				break;
 
-            position.set(Position.KEY_LBS, BitUtil.check(status, 0));
-            position.set(Position.KEY_ALARM, BitUtil.check(status, 1) ? Position.ALARM_GEOFENCE_ENTER : null);
-            position.set(Position.KEY_ALARM, BitUtil.check(status, 2) ? Position.ALARM_GEOFENCE_EXIT : null);
-            position.set(Position.KEY_ALARM, BitUtil.check(status, 3) ? Position.ALARM_STEEL_STRING_CUT : null);
-            position.set(Position.KEY_ALARM, BitUtil.check(status, 4) ? Position.ALARM_VIBRATION : null);
-            position.set(Position.KEY_STEEL_STRING_STATUS, BitUtil.check(status, 6));
-            position.set(Position.KEY_MOTOR_LOCK_STATUS, BitUtil.check(status, 7));
-            position.set(Position.KEY_ALARM, BitUtil.check(status, 8 + 3) ? Position.ALARM_LOW_BATTERY : null);
-            position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(status, 8 + 5));
-            position.set(Position.KEY_ALARM, BitUtil.check(status, 8 + 6) ? Position.ALARM_FAULT : null);
-            position.set(Position.KEY_STATUS, status);*/
+			case 0x05 : 
+				LOGGER.info("0x05");
+				// Reserved, should never be called
+				LOGGER.info("OMG there's a 0x05 what do we do!");
+				break;
 
-            //int battery = buf.readUnsignedByte();
-            //if (battery == 0xff) {
-            //      position.set(Position.KEY_CHARGE, true);
-            //} else {
-            //      position.set(Position.KEY_BATTERY_LEVEL, battery);
-            //}
+			case 0x30 :
+				LOGGER.info("0x30");
+				buf.readByte(); // Length
+				LOGGER.info("0x30 1 Remaining bytes: " + buf.readableBytes());
+				// skip wireless signal strength
+				buf.readByte();
+				LOGGER.info("0x30 2 Remaining bytes: " + buf.readableBytes());
+				break;
 
-            //CellTower cellTower = CellTower.fromCidLac(buf.readUnsignedShort(), buf.readUnsignedShort());
-            //cellTower.setSignalStrength((int) buf.readUnsignedByte());
-            //position.setNetwork(new Network(cellTower));
+			case 0x31 :
+				LOGGER.info("0x31");
+				buf.readByte(); // Length
+				int satelites = (int) buf.readByte();
+        			position.set(Position.KEY_SATELLITES, satelites);
+				LOGGER.info("satelites: " + satelites);
+				LOGGER.info("0x31 Remaining bytes: " + buf.readableBytes());
+				break;
 
-            //if (protocolVersion == 0x17) {
-            //      buf.readUnsignedByte(); // geofence id
-            //      buf.skipBytes(3); // reserved
-            //      buf.skipBytes(buf.readableBytes() - 1);
-            //}
+			case 0xd4 :
+				LOGGER.info("0xD4");
+				buf.readByte(); // Length
+				int battery = (int) buf.readByte();
+              			position.set(Position.KEY_BATTERY_LEVEL, battery);
+				LOGGER.info("battery: " + battery);
+				if (battery <= 10) {
+        				position.set(Position.KEY_ALARM, Position.ALARM_LOW_BATTERY);
+				}
+				LOGGER.info("0xd4 Remaining bytes: " + buf.readableBytes());
+				break;
 
-	    position.setProtocol("jt707a");
-            positions.add(position);
+			case 0xd5 :
+				LOGGER.info("0xD5");
+				buf.readByte(); // Length
+				double voltage = (double) buf.readShort(); // skip battery voltage
+				LOGGER.info("battery voltage: " + voltage);
+				LOGGER.info("0xd5 Remaining bytes: " + buf.readableBytes());
+				break;
 
-        //buf.readUnsignedByte(); // index
+			case 0xda :
+				LOGGER.info("0xDA");
+				buf.readByte(); // Length
+				int steelCutTimes = (int) buf.readShort();
+				//int sensor = (int)buf.readUnsignedByte();
+				int sensor = (int) buf.readByte();
+
+        			position.set(Position.KEY_STEEL_CUT_TIMES, steelCutTimes);
+        			position.set(Position.KEY_ALARM, BitUtil.check(sensor, 0) 
+						? Position.ALARM_STEEL_STRING_CUT : null);
+        			position.set(Position.KEY_MOTION, BitUtil.check(sensor, 1) ? true : false);
+        			position.set(Position.KEY_SIM_TYPE, BitUtil.check(sensor, 2) ? "ESIM" : "SIM");
+        			position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(sensor, 3) ? true : false);
+        			position.set(Position.KEY_STATUS, sensor);
+
+				LOGGER.info("SteelCutTimes: " + steelCutTimes);
+				LOGGER.info("status: " + sensor);
+				LOGGER.info("0xda Remaining bytes: " + buf.readableBytes());
+				break;
+
+			case 0xdb :
+				LOGGER.info("0xDB");
+				buf.readByte(); // Length
+				// Skip DB20022 
+				buf.readShort(); 
+				LOGGER.info("0xdb Remaining bytes: " + buf.readableBytes());
+				break;
+
+			case 0xdc :
+				LOGGER.info("0xDC");
+				buf.readByte(); // Length
+				buf.readInt(); // Skip internet debug status
+				LOGGER.info("0xdc Remaining bytes: " + buf.readableBytes());
+				break;
+
+			case 0xfe :
+				LOGGER.info("0xFE");
+				buf.readByte(); // Length
+				buf.readInt(); // Skip gps mileage
+				LOGGER.info("0xfe Remaining bytes: " + buf.readableBytes());
+				break;
+
+			case 0xfd :
+				LOGGER.info("0xFD");
+				buf.readByte(); // Length
+				int mcc = (int) buf.readShort();
+				int mnc = (int) buf.readByte();
+				int cellid = buf.readInt();
+				int lacid = (int) buf.readShort();
+
+				CellTower cellTower = CellTower.from(mcc, mnc, lacid, cellid);
+				cellTower.setSignalStrength(-1);
+				position.setNetwork(new Network(cellTower));
+				LOGGER.info("0xfd Remaining bytes: " + buf.readableBytes());
+				break;
+			default:
+				// Do Nothing!!
+		}
+		xid = 0x0;
+
+	}
+	
+	LOGGER.info("at the end remaining bytes: " + buf.readableBytes());
+        position.setProtocol("jt707a");
+        positions.add(position);
+
 
         return positions;
     }
