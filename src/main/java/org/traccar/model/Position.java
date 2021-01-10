@@ -100,6 +100,9 @@ public class Position extends Message {
     public static final String KEY_MOTOR_LOCK_STATUS = "motorLockStatus";
     public static final String KEY_BACK_CAP_STATUS = "backCapStatus";
 
+    public static final String KEY_SIM_TYPE = "simType";
+    public static final String KEY_STEEL_CUT_TIMES = "steelCutTimes";
+
     // Start with 1 not 0
     public static final String PREFIX_TEMP = "temp";
     public static final String PREFIX_ADC = "adc";
