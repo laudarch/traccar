@@ -97,69 +97,69 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         	.setSecond(BcdUtil.readInteger(buf, 2));
         position.setTime(dateBuilder.getDate());
 
-	LOGGER.info("Remaining bytes: " + buf.readableBytes());
+	//LOGGER.info("Remaining bytes: " + rdata);
 	while (buf.readableBytes() >= 1) {
         	int xid = (int) buf.readByte(); 
 
 		switch (xid) {
 			case 0x7e :
-				LOGGER.info("0x7e");
+				//LOGGER.info("0x7e");
 				break; // we are done :)
 
 			case 0x01 :
-				LOGGER.info("0x01");
+				//LOGGER.info("0x01");
 				buf.readByte(); // Length
 				int mileage = buf.readInt();
-				LOGGER.info("mileage: " + mileage);
-				LOGGER.info("0x01 Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("mileage: " + mileage);
+				//LOGGER.info("0x01 Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0x05 : 
-				LOGGER.info("0x05");
+				//LOGGER.info("0x05");
 				// Reserved, should never be called
-				LOGGER.info("OMG there's a 0x05 what do we do!");
+				//LOGGER.info("OMG there's a 0x05 what do we do!");
 				break;
 
 			case 0x30 :
-				LOGGER.info("0x30");
+				//LOGGER.info("0x30");
 				buf.readByte(); // Length
-				LOGGER.info("0x30 1 Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0x30 1 Remaining bytes: " + buf.readableBytes());
 				// skip wireless signal strength
 				buf.readByte();
-				LOGGER.info("0x30 2 Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0x30 2 Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0x31 :
-				LOGGER.info("0x31");
+				//LOGGER.info("0x31");
 				buf.readByte(); // Length
 				int satelites = (int) buf.readByte();
         			position.set(Position.KEY_SATELLITES, satelites);
-				LOGGER.info("satelites: " + satelites);
-				LOGGER.info("0x31 Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("satelites: " + satelites);
+				//LOGGER.info("0x31 Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xd4 :
-				LOGGER.info("0xD4");
+				//LOGGER.info("0xD4");
 				buf.readByte(); // Length
 				int battery = (int) buf.readByte();
               			position.set(Position.KEY_BATTERY_LEVEL, battery);
-				LOGGER.info("battery: " + battery);
+				//LOGGER.info("battery: " + battery);
 				if (battery <= 10) {
         				position.set(Position.KEY_ALARM, Position.ALARM_LOW_BATTERY);
 				}
-				LOGGER.info("0xd4 Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0xd4 Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xd5 :
-				LOGGER.info("0xD5");
+				//LOGGER.info("0xD5");
 				buf.readByte(); // Length
 				double voltage = (double) buf.readShort(); // skip battery voltage
-				LOGGER.info("battery voltage: " + voltage);
-				LOGGER.info("0xd5 Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("battery voltage: " + voltage);
+				//LOGGER.info("0xd5 Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xda :
-				LOGGER.info("0xDA");
+				//LOGGER.info("0xDA");
 				buf.readByte(); // Length
 				int steelCutTimes = (int) buf.readShort();
 				//int sensor = (int)buf.readUnsignedByte();
@@ -173,35 +173,35 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         			position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(sensor, 3) ? true : false);
         			position.set(Position.KEY_STATUS, sensor);
 
-				LOGGER.info("SteelCutTimes: " + steelCutTimes);
-				LOGGER.info("status: " + sensor);
-				LOGGER.info("0xda Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("SteelCutTimes: " + steelCutTimes);
+				//LOGGER.info("status: " + sensor);
+				//LOGGER.info("0xda Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xdb :
-				LOGGER.info("0xDB");
+				//LOGGER.info("0xDB");
 				buf.readByte(); // Length
 				// Skip DB20022 
 				buf.readShort(); 
-				LOGGER.info("0xdb Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0xdb Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xdc :
-				LOGGER.info("0xDC");
+				//LOGGER.info("0xDC");
 				buf.readByte(); // Length
 				buf.readInt(); // Skip internet debug status
-				LOGGER.info("0xdc Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0xdc Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xfe :
-				LOGGER.info("0xFE");
+				//LOGGER.info("0xFE");
 				buf.readByte(); // Length
 				buf.readInt(); // Skip gps mileage
-				LOGGER.info("0xfe Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0xfe Remaining bytes: " + buf.readableBytes());
 				break;
 
 			case 0xfd :
-				LOGGER.info("0xFD");
+				//LOGGER.info("0xFD");
 				buf.readByte(); // Length
 				int mcc = (int) buf.readShort();
 				int mnc = (int) buf.readByte();
@@ -211,7 +211,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				CellTower cellTower = CellTower.from(mcc, mnc, lacid, cellid);
 				cellTower.setSignalStrength(-1);
 				position.setNetwork(new Network(cellTower));
-				LOGGER.info("0xfd Remaining bytes: " + buf.readableBytes());
+				//LOGGER.info("0xfd Remaining bytes: " + buf.readableBytes());
 				break;
 			default:
 				// Do Nothing!!
@@ -220,7 +220,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
 	}
 	
-	LOGGER.info("at the end remaining bytes: " + buf.readableBytes());
+	//LOGGER.info("at the end remaining bytes: " + buf.readableBytes());
         position.setProtocol("jt707a");
         positions.add(position);
 
