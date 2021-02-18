@@ -46,6 +46,10 @@ public class Jt701ProtocolEncoder extends StringProtocolEncoder {
                 return "(S09,1," + offset + ")";
             case Command.TYPE_REBOOT_DEVICE:
                 return "(S17)";
+	    case Command.TYPE_ALARM_ARM:
+	        return formatCommand(command, "*ET,%s,FD,F1#", Command.KEY_UNIQUE_ID);
+	    case Command.TYPE_ALARM_DISARM:
+	        return "(P43, 654321)";
             default:
                 return null;
         }
