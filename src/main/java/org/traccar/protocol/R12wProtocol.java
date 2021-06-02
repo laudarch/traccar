@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2021 Anton Tananaev (anton@traccar.org)
+ * Copyright 2021 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,23 @@
  */
 package org.traccar.protocol;
 
+import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import org.traccar.BaseProtocol;
-import org.traccar.CharacterDelimiterFrameDecoder;
 import org.traccar.PipelineBuilder;
 import org.traccar.TrackerServer;
 
-public class TaipProtocol extends BaseProtocol {
+public class R12wProtocol extends BaseProtocol {
 
-    public TaipProtocol() {
+    public R12wProtocol() {
         addServer(new TrackerServer(false, getName()) {
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline) {
-                pipeline.addLast(new CharacterDelimiterFrameDecoder(1024, '<'));
-                pipeline.addLast(new TaipPrefixEncoder(TaipProtocol.this));
-                pipeline.addLast(new StringDecoder());
+                pipeline.addLast(new LineBasedFrameDecoder(1024));
                 pipeline.addLast(new StringEncoder());
-                pipeline.addLast(new TaipProtocolDecoder(TaipProtocol.this));
-            }
-        });
-        addServer(new TrackerServer(true, getName()) {
-            @Override
-            protected void addProtocolHandlers(PipelineBuilder pipeline) {
-                pipeline.addLast(new TaipPrefixEncoder(TaipProtocol.this));
                 pipeline.addLast(new StringDecoder());
-                pipeline.addLast(new StringEncoder());
-                pipeline.addLast(new TaipProtocolDecoder(TaipProtocol.this));
+                pipeline.addLast(new R12wProtocolDecoder(R12wProtocol.this));
             }
         });
     }

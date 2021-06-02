@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2021 Anton Tananaev (anton@traccar.org)
+ * Copyright 2021 Chipeng Li (chplee@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,19 +18,17 @@ package org.traccar.protocol;
 import org.traccar.BaseProtocol;
 import org.traccar.PipelineBuilder;
 import org.traccar.TrackerServer;
-import org.traccar.model.Command;
 
-public class UlbotechProtocol extends BaseProtocol {
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 
-    public UlbotechProtocol() {
-        setSupportedDataCommands(
-                Command.TYPE_CUSTOM);
-        addServer(new TrackerServer(false, getName()) {
+public class Mavlink2Protocol extends BaseProtocol {
+
+    public Mavlink2Protocol() {
+        addServer(new TrackerServer(true, getName()) {
             @Override
             protected void addProtocolHandlers(PipelineBuilder pipeline) {
-                pipeline.addLast(new UlbotechFrameDecoder());
-                pipeline.addLast(new UlbotechProtocolEncoder(UlbotechProtocol.this));
-                pipeline.addLast(new UlbotechProtocolDecoder(UlbotechProtocol.this));
+                pipeline.addLast(new LengthFieldBasedFrameDecoder(1024, 1, 1, 10, 0));
+                pipeline.addLast(new Mavlink2ProtocolDecoder(Mavlink2Protocol.this));
             }
         });
     }
