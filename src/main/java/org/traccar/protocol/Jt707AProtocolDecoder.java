@@ -105,6 +105,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         	.setSecond(BcdUtil.readInteger(buf, 2));
         position.setTime(dateBuilder.getDate());
 
+        int signal = -1;
 
 //	LOGGER.info("Remaining bytes: " + buf.readableBytes());
 
@@ -140,7 +141,8 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				buf.readByte(); // Length
 				//LOGGER.info("0x30 1 Remaining bytes: " + buf.readableBytes());
 				// skip wireless signal strength
-				buf.readByte();
+				signal = (int) buf.readByte();
+
 				//LOGGER.info("0x30 2 Remaining bytes: " + buf.readableBytes());
 				break;
 
@@ -230,7 +232,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				int lacid = (int) buf.readShort();
 
 				CellTower cellTower = CellTower.from(mcc, mnc, lacid, cellid);
-				cellTower.setSignalStrength(-1);
+				cellTower.setSignalStrength(signal);
 				position.setNetwork(new Network(cellTower));
 				LOGGER.info("mcc is "+mcc);
 				LOGGER.info("cellId is "+cellid);
