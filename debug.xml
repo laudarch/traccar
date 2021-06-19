@@ -23,4 +23,10 @@
     <entry key='atrack.custom'>true</entry>
     <entry key='intellitrac.port'>6037</entry>
 
+
+    <entry key='jt707a.port'>10004</entry>
+    <entry key='jt707a.timeout'>60</entry>
+    <entry key='protocol.timeout'>60</entry>
+
+
 </properties>
