@@ -186,14 +186,16 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				int sensor = (int) buf.readByte();
 
         			position.set(Position.KEY_STEEL_CUT_TIMES, steelCutTimes);
-        			position.set(Position.KEY_ALARM, BitUtil.check(sensor, 0) 
+        			position.set(Position.KEY_ALARM, BitUtil.check(sensor, 0)
 						? Position.ALARM_STEEL_STRING_CUT : null);
-        			position.set(Position.KEY_MOTION, BitUtil.check(sensor, 1) ? true : false);
+        			position.set(Position.KEY_STEEL_STRING_STATUS,BitUtil.check(sensor, 0));
+        			position.set(Position.KEY_MOTION, BitUtil.check(sensor, 1));
         			position.set(Position.KEY_SIM_TYPE, BitUtil.check(sensor, 2) ? "ESIM" : "SIM");
-        			position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(sensor, 3) ? true : false);
+        			position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(sensor, 3));
         			position.set(Position.KEY_STATUS, sensor);
 
 				LOGGER.info("SteelCutTimes: " + steelCutTimes);
+				LOGGER.info("stell status: " + (BitUtil.check(sensor, 0) ? "true" : "false"));
 				LOGGER.info("status: " + sensor);
 				//LOGGER.info("0xda Remaining bytes: " + buf.readableBytes());
 				break;
