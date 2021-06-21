@@ -97,6 +97,8 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         	.setSecond(BcdUtil.readInteger(buf, 2));
         position.setTime(dateBuilder.getDate());
 
+	int signal = -1;
+
 	//LOGGER.info("Remaining bytes: " + rdata);
 	while (buf.readableBytes() >= 1) {
         	int xid = (int) buf.readByte(); 
@@ -125,8 +127,9 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				buf.readByte(); // Length
 				//LOGGER.info("0x30 1 Remaining bytes: " + buf.readableBytes());
 				// skip wireless signal strength
-				buf.readByte();
+				//buf.readByte();
 				//LOGGER.info("0x30 2 Remaining bytes: " + buf.readableBytes());
+				signal = (int) buf.readByte();
 				break;
 
 			case 0x31 :
@@ -138,6 +141,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				//LOGGER.info("0x31 Remaining bytes: " + buf.readableBytes());
 				break;
 
+			case -44 :
 			case 0xd4 :
 				//LOGGER.info("0xD4");
 				buf.readByte(); // Length
@@ -150,6 +154,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				//LOGGER.info("0xd4 Remaining bytes: " + buf.readableBytes());
 				break;
 
+			case -43 :
 			case 0xd5 :
 				//LOGGER.info("0xD5");
 				buf.readByte(); // Length
@@ -158,6 +163,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				//LOGGER.info("0xd5 Remaining bytes: " + buf.readableBytes());
 				break;
 
+			case -38 :
 			case 0xda :
 				//LOGGER.info("0xDA");
 				buf.readByte(); // Length
@@ -168,9 +174,9 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         			position.set(Position.KEY_STEEL_CUT_TIMES, steelCutTimes);
         			position.set(Position.KEY_ALARM, BitUtil.check(sensor, 0) 
 						? Position.ALARM_STEEL_STRING_CUT : null);
-        			position.set(Position.KEY_MOTION, BitUtil.check(sensor, 1) ? true : false);
+        			position.set(Position.KEY_MOTION, BitUtil.check(sensor, 1));
         			position.set(Position.KEY_SIM_TYPE, BitUtil.check(sensor, 2) ? "ESIM" : "SIM");
-        			position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(sensor, 3) ? true : false);
+        			position.set(Position.KEY_BACK_CAP_STATUS, BitUtil.check(sensor, 3));
         			position.set(Position.KEY_STATUS, sensor);
 
 				//LOGGER.info("SteelCutTimes: " + steelCutTimes);
@@ -178,6 +184,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				//LOGGER.info("0xda Remaining bytes: " + buf.readableBytes());
 				break;
 
+			case -37 :
 			case 0xdb :
 				//LOGGER.info("0xDB");
 				buf.readByte(); // Length
@@ -186,6 +193,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 				//LOGGER.info("0xdb Remaining bytes: " + buf.readableBytes());
 				break;
 
+			case -36 :
 			case 0xdc :
 				//LOGGER.info("0xDC");
 				buf.readByte(); // Length
