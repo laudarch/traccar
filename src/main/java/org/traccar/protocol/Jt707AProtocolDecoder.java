@@ -188,6 +188,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
         			position.set(Position.KEY_STEEL_CUT_TIMES, steelCutTimes);
         			position.set(Position.KEY_ALARM, BitUtil.check(sensor, 0)
 						? Position.ALARM_STEEL_STRING_CUT : null);
+
         			position.set(Position.KEY_STEEL_STRING_STATUS,BitUtil.check(sensor, 0));
         			position.set(Position.KEY_MOTION, BitUtil.check(sensor, 1));
         			position.set(Position.KEY_SIM_TYPE, BitUtil.check(sensor, 2) ? "ESIM" : "SIM");
