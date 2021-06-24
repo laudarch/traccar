@@ -18,18 +18,18 @@ package org.traccar.protocol;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.Channel;
+import jnr.constants.platform.Sock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.net.SocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import org.traccar.BaseProtocolDecoder;
 import org.traccar.DeviceSession;
+import org.traccar.NetworkMessage;
 import org.traccar.Protocol;
-import org.traccar.helper.BcdUtil;
-import org.traccar.helper.BitUtil;
-import org.traccar.helper.DateBuilder;
-import org.traccar.helper.DataConverter;
+import org.traccar.helper.*;
 import org.traccar.model.CellTower;
 import org.traccar.model.Network;
 import org.traccar.model.Position;
@@ -46,6 +46,36 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 	    return raw / 1000000.0;
     }
 
+	private static String convertToHex(byte[] data) {
+		StringBuffer buf = new StringBuffer();
+		for (int i = 0; i < data.length; i++) {
+			int halfbyte = (data[i] >>> 4) & 0x0F;
+			int two_halfs = 0;
+			do {
+				if ((0 <= halfbyte) && (halfbyte <= 9))
+					buf.append((char) ('0' + halfbyte));
+				else
+					buf.append((char) ('a' + (halfbyte - 10)));
+				halfbyte = data[i] & 0x0F;
+			} while(two_halfs++ < 1);
+		}
+		return buf.toString();
+	}
+
+
+	private void decodeAndResponseHeartBeat(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
+
+		String messageLength = ByteBufUtil.hexDump(buf.readBytes(2));
+		int Xx = Checksum.xor("8001000A013424150535024902480002");
+		String code = "000A";
+		String id = String.valueOf(Long.parseLong(ByteBufUtil.hexDump(buf.readSlice(6))));
+		String series = ByteBufUtil.hexDump(buf.readBytes(2));
+
+		String res = "7e8001"+code+id+series+series+"000200"+Xx+"7e";
+		channel.writeAndFlush(new NetworkMessage(res,remoteAddress));
+
+	}
+
     private List<Position> decodeBinary(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
 
 //    	LOGGER.info("Hello am starting s");
@@ -54,17 +84,23 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
         byte header = buf.readByte(); // header
 		ByteBuf messageID = buf.readBytes(2);
-		ByteBuf messageLength = buf.readBytes(2);
+		String mid = ByteBufUtil.hexDump(messageID);
+		LOGGER.info("mid is "+mid);
 
+		if (mid.equals("0002")) {
+			decodeAndResponseHeartBeat(buf,channel,remoteAddress);
+			return null;
+		}
+
+		ByteBuf messageLength = buf.readBytes(2);
         String id = String.valueOf(Long.parseLong(ByteBufUtil.hexDump(buf.readSlice(6))));
-        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, id);
+		DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, id);
         if (deviceSession == null) {
             return null;
         }
 
-	ByteBuf series = buf.readBytes(2);
-
-        ByteBuf alarmFlag = buf.readBytes(4); // alarm flags
+		ByteBuf series = buf.readBytes(2);
+		ByteBuf alarmFlag = buf.readBytes(4); // alarm flags
         int statusFlag = buf.readInt(); // statusflags
 
         Position position = new Position(getProtocolName());
@@ -247,6 +283,15 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 		xid = 0x0;
 
 	}
+
+		//this is the message id
+//		if (messageID == 2) {
+//			//heartbeat response
+//			String response = "7e8001"+;
+//			channel.writeAndFlush(new NetworkMessage("",remoteAddress));
+//		}
+
+
 	
 	//LOGGER.info("at the end remaining bytes: " + buf.readableBytes());
         position.setProtocol("jt707a");
@@ -262,6 +307,8 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
         ByteBuf buf = (ByteBuf) msg;
         char first = (char) buf.getByte(0);
+
+        LOGGER.info("first is "+first);
 
         if (first == '~') {
             return decodeBinary(buf, channel, remoteAddress);
