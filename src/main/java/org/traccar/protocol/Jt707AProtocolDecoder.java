@@ -66,10 +66,13 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 	private void decodeAndResponseHeartBeat(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
 
 		String messageLength = ByteBufUtil.hexDump(buf.readBytes(2));
-		int Xx = Checksum.xor("8001000A013424150535024902480002");
 		String code = "000A";
 		String id = String.valueOf(Long.parseLong(ByteBufUtil.hexDump(buf.readSlice(6))));
 		String series = ByteBufUtil.hexDump(buf.readBytes(2));
+
+		int Xx = Checksum.xor("8001"+code+id+series+series+"000200");
+
+		LOGGER.info("Xx is "+Xx);
 
 		String res = "7e8001"+code+id+series+series+"000200"+Xx+"7e";
 		channel.writeAndFlush(new NetworkMessage(res,remoteAddress));
