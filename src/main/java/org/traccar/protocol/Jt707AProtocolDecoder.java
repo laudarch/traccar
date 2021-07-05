@@ -51,6 +51,7 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
         List<Position> positions = new LinkedList<>();
 
+	ByteBuf hexbuf = buf;
         byte header = buf.readByte(); // header
 	ByteBuf messageID = buf.readBytes(2);
 	ByteBuf messageLength = buf.readBytes(2);
@@ -68,6 +69,8 @@ public class Jt707AProtocolDecoder extends BaseProtocolDecoder {
 
         Position position = new Position(getProtocolName());
         position.setDeviceId(deviceSession.getDeviceId());
+
+	position.set(Position.KEY_HEXDUMP,  ByteBufUtil.hexDump(hexbuf));
 
         int lat = buf.readInt();
         int lon = buf.readInt(); 

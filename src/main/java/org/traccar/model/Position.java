@@ -103,6 +103,8 @@ public class Position extends Message {
     public static final String KEY_SIM_TYPE = "simType";
     public static final String KEY_STEEL_CUT_TIMES = "steelCutTimes";
 
+    public static final String KEY_HEXDUMP = "hexdump";
+
     // Start with 1 not 0
     public static final String PREFIX_TEMP = "temp";
     public static final String PREFIX_ADC = "adc";
