@@ -105,6 +105,8 @@ public class Position extends Message {
 
     public static final String KEY_HEXDUMP = "hexdump";
 
+    public static final String KEY_MILEAGE = "mileage";
+
     // Start with 1 not 0
     public static final String PREFIX_TEMP = "temp";
     public static final String PREFIX_ADC = "adc";
@@ -157,6 +159,9 @@ public class Position extends Message {
     public static final String ALARM_SWIPE_UNAUTHORIZED_CARD = "swipeUnathorizedCard";
     public static final String ALARM_OPEN_BACK_CAP = "openBackCap";
     public static final String ALARM_MOTOR_FAULT = "motorFault";
+
+    public static final String ALARM_MOTOR_STUCK = "motorStuck";
+    public static final String ALARM_BACK_CAP_OPEN = "backCapOpen";
 
     public Position() {
     }
