@@ -17,6 +17,7 @@ package org.traccar.protocol;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import org.traccar.BaseProtocolDecoder;
 import org.traccar.DeviceSession;
@@ -35,6 +36,7 @@ import org.traccar.model.Position;
 
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -128,6 +130,15 @@ public class Jt701DProtocolDecoder extends BaseProtocolDecoder {
         position.setCourse(buf.readUnsignedByte() * 2.0);
     }
 
+    private void sendResponse(Channel channel, int dsn) {
+        if (channel != null) {
+            ByteBuf response = Unpooled.buffer();
+	    String dsn_str = "(P69,0," + dsn + ")";
+            response.writeCharSequence(dsn_str, Charset.forName("uTF-8"));
+            channel.writeAndFlush(new NetworkMessage(response, channel.remoteAddress()));
+        }
+    }
+
     private List<Position> decodeBinary(ByteBuf buf, Channel channel, SocketAddress remoteAddress) {
 
         List<Position> positions = new LinkedList<>();
@@ -189,8 +200,9 @@ public class Jt701DProtocolDecoder extends BaseProtocolDecoder {
         buf.readUnsignedByte(); // geofence id
         buf.skipBytes(3); // reserved
         buf.skipBytes(buf.readableBytes() - 1);
-        buf.readUnsignedByte(); // index
+        int dataSerialNumber = buf.readUnsignedByte(); // index
 
+	sendResponse(channel, dataSerialNumber);
         positions.add(position);
         return positions;
     }
