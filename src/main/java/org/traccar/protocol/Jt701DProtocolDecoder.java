@@ -53,41 +53,6 @@ public class Jt701DProtocolDecoder extends BaseProtocolDecoder {
         return degrees + minutes / 60;
     }
 
-    private void decodeStatus(Position position, ByteBuf buf) {
-
-        int value = buf.readUnsignedByte();
-
-        position.set(Position.KEY_IGNITION, BitUtil.check(value, 0));
-        position.set(Position.KEY_DOOR, BitUtil.check(value, 6));
-
-        value = buf.readUnsignedByte();
-
-        position.set(Position.KEY_CHARGE, BitUtil.check(value, 0));
-        position.set(Position.KEY_BLOCKED, BitUtil.check(value, 1));
-
-        if (BitUtil.check(value, 2)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_SOS);
-        }
-        if (BitUtil.check(value, 3) || BitUtil.check(value, 4)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_GPS_ANTENNA_CUT);
-        }
-        if (BitUtil.check(value, 4)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_OVERSPEED);
-        }
-
-        value = buf.readUnsignedByte();
-
-        if (BitUtil.check(value, 2)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_FATIGUE_DRIVING);
-        }
-        if (BitUtil.check(value, 3)) {
-            position.set(Position.KEY_ALARM, Position.ALARM_TOW);
-        }
-
-        buf.readUnsignedByte(); // reserved
-
-    }
-
     static boolean isLongFormat(ByteBuf buf, int flagIndex) {
         return buf.getUnsignedByte(flagIndex) >> 4 == 0x7;
     }
